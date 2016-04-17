@@ -1,19 +1,26 @@
 package matrix
 
-import "strconv"
+import (
+	"strconv"
+	log "github.com/Sirupsen/logrus"
+)
 
 func (m *Matrix) vectorIndex(pos int) float64{
-	var count int = 0
-	var elem float64 = -1.0
-	for i, item := range m.Table {
-		for j := range item {
-			if count == pos {
-				elem = m.Table[i][j]
-			}
-			count = count + 1
-		}
+	if pos >= (m.rows*m.cols) {
+		log.WithFields(log.Fields{
+			"rowsXcols": (m.rows*m.cols),
+			"vectorIndex": pos,
+		}).Warn("vectorIndex out of bounds")
+		return -1.0
 	}
-	return elem
+
+	// i(vector_index) = vector_index/number_of_columns
+	i := pos/m.cols
+
+	// j(vector_index) = vector_index - (number_of_columns*i)
+	j := pos - (m.cols * i)
+
+	return m.Table[i][j]
 }
 
 func (m *Matrix) matrixIndex(pi int, pj int) float64{
@@ -47,7 +54,7 @@ func (m *Matrix) s_i_index(i string, j int) *Matrix {
 	case 1:
 		if i == ":" {
 			returnMatrix := &Matrix{}
-			for i := 0; i < m.horizontalDim; i += 1 {
+			for i := 0; i < m.rows; i += 1 {
 				returnMatrix.Insert(
 					Row{m.Table[i][j]},
 				)
@@ -139,7 +146,7 @@ func (m *Matrix) s_s_index(i string, j string) *Matrix {
 func (m *Matrix) colVector(pos int) *Matrix {
 	if pos == -1 {
 		returnMatrix := &Matrix{}
-		for i := 0; i < m.horizontalDim * m.verticalDim; i += 1 {
+		for i := 0; i < m.rows * m.cols; i += 1 {
 			returnMatrix.Insert(
 				Row{m.vectorIndex(i)},
 			)
