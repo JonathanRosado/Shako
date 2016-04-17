@@ -3,82 +3,93 @@ package matrix
 import (
 	"strconv"
 	log "github.com/Sirupsen/logrus"
+	"github.com/JonathanRosado/Shako/linalg/matrix/data"
 )
 
 func (m *Matrix) vectorIndex(pos int) float64{
-	if pos >= (m.rows*m.cols) {
+	if pos >= (m.data.Rows*m.data.Cols) {
 		log.WithFields(log.Fields{
-			"rowsXcols": (m.rows*m.cols),
+			"rowsXcols": (m.data.Rows*m.data.Cols),
 			"vectorIndex": pos,
 		}).Warn("vectorIndex out of bounds")
 		return -1.0
 	}
 
 	// i(vector_index) = vector_index/number_of_columns
-	i := pos/m.cols
+	i := pos/m.data.Cols
 
 	// j(vector_index) = vector_index - (number_of_columns*i)
-	j := pos - (m.cols * i)
+	j := pos - (m.data.Cols * i)
 
-	return m.Table[i][j]
+	return m.data.Get(i,j)
 }
 
 func (m *Matrix) matrixIndex(pi int, pj int) float64{
-	return m.Table[pi][pj]
+	return m.data.Get(pi, pj)
 }
 
 func (m *Matrix) i_s_index(i int, j string) *Matrix {
 	switch len(j) {
 	case 1:
 		if j == ":" {
-			return (&Matrix{}).Insert(
-				m.Table[i],
-			)
+			matrix := &Matrix{}
+			matrix.data = *(&data.Data{}).Create([][]float64{
+				m.data.GetRow(i),
+			})
+			return matrix
 		}
 		if jVal, err := strconv.Atoi(j); err == nil {
-			return (&Matrix{}).Insert(
-				Row{m.Elem(i, jVal)},
-			)
+			matrix := &Matrix{}
+			matrix.data = *(&data.Data{}).Create([][]float64{
+				[]float64{m.Elem(i, jVal)},
+			})
+			return matrix
 		} else {
 			panic("Index operation not supported")
 		}
 	}
 
-	return (&Matrix{}).Insert(
-		Row{0},
-	)
+	matrix := &Matrix{}
+	matrix.data = *(&data.Data{}).Create([][]float64{
+		[]float64{0},
+	})
+	return matrix
 }
 
 func (m *Matrix) s_i_index(i string, j int) *Matrix {
 	switch len(i) {
 	case 1:
 		if i == ":" {
-			returnMatrix := &Matrix{}
-			for i := 0; i < m.rows; i += 1 {
-				returnMatrix.Insert(
-					Row{m.Table[i][j]},
-				)
-			}
-			return returnMatrix
+			matrix := &Matrix{}
+			matrix.data = *(&data.Data{}).Create([][]float64{
+				m.data.GetColumn(j),
+			}).Transpose()
+			return matrix
 		}
 		if iVal, err := strconv.Atoi(i); err == nil {
-			return (&Matrix{}).Insert(
-				Row{m.Elem(iVal, j)},
-			)
+			matrix := &Matrix{}
+			matrix.data = *(&data.Data{}).Create([][]float64{
+				[]float64{m.Elem(iVal, iVal)},
+			})
+			return matrix
 		} else {
 			panic("Index operation not supported")
 		}
 	}
 
-	return (&Matrix{}).Insert(
-		Row{0},
-	)
+	matrix := &Matrix{}
+	matrix.data = *(&data.Data{}).Create([][]float64{
+		[]float64{0},
+	})
+	return matrix
 }
 
 func (m *Matrix) i_i_index(i int, j int) *Matrix {
-	return (&Matrix{}).Insert(
-		Row{m.matrixIndex(i, j)},
-	)
+	matrix := &Matrix{}
+	matrix.data = *(&data.Data{}).Create([][]float64{
+		[]float64{m.matrixIndex(i, j)},
+	})
+	return matrix
 }
 
 func (m *Matrix) s_s_index(i string, j string) *Matrix {
@@ -134,27 +145,18 @@ func (m *Matrix) s_s_index(i string, j string) *Matrix {
 		return m.s_i_index(i, pj)
 	}
 
-	return (&Matrix{}).Insert(
-		Row{0},
-	)
+	matrix := &Matrix{}
+	matrix.data = *(&data.Data{}).Create([][]float64{
+		[]float64{0},
+	})
+	return matrix
 }
 
 //func (m *Matrix) rowVector(pos int) *Matrix {
 //
 //}
 
-func (m *Matrix) colVector(pos int) *Matrix {
-	if pos == -1 {
-		returnMatrix := &Matrix{}
-		for i := 0; i < m.rows * m.cols; i += 1 {
-			returnMatrix.Insert(
-				Row{m.vectorIndex(i)},
-			)
-		}
-		return returnMatrix
-	}
-
-	return (&Matrix{}).Insert(
-		Row{0},
-	)
+func (m *Matrix) columnVector() *Matrix {
+	m.data.ColumnVector()
+	return m
 }
